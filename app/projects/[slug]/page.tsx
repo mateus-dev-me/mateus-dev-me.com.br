@@ -52,7 +52,6 @@ const getProjectDetails = async (slug: string): Promise<ProjectPageData> => {
 export default async function Project({ params: { slug } }: ProjectProps) {
   const { project } = await getProjectDetails(slug)
 
-
   if (!project?.title) return notFound()
 
   return (
@@ -73,7 +72,6 @@ export async function generateStaticParams() {
   `
 
   const { projects } = await fetchHygraphQuery<ProjectsPageStaticData>(query)
-
 
   return projects
 }
