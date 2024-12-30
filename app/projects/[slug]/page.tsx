@@ -13,7 +13,7 @@ type ProjectProps = {
 
 const getProjectDetails = async (slug: string): Promise<ProjectPageData> => {
   const query = `
-  query ProjectQuery() {
+  query ProjectQuery {
     project(where: {slug: "${slug}"}) {
       pageThumbnail {
         url
@@ -46,13 +46,12 @@ const getProjectDetails = async (slug: string): Promise<ProjectPageData> => {
     1000 * 60 * 60 * 24, // 1 day
   )
 
-  console.debug(data)
-
   return data
 }
 
 export default async function Project({ params: { slug } }: ProjectProps) {
   const { project } = await getProjectDetails(slug)
+
 
   if (!project?.title) return notFound()
 
@@ -66,13 +65,15 @@ export default async function Project({ params: { slug } }: ProjectProps) {
 
 export async function generateStaticParams() {
   const query = `
-    query ProjectsSlugsQuery() {
+    query ProjectsSlugsQuery {
       projects(first: 100) {
         slug
       }
     }
   `
+
   const { projects } = await fetchHygraphQuery<ProjectsPageStaticData>(query)
+
 
   return projects
 }
