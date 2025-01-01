@@ -11,17 +11,35 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20.16.0"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the project
+        run: npm run build
 
       - name: Deploy to VPS
         env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
-          ssh $VPS_USER@$VPS_HOST << EOF
+          echo "$SSH_KEY" > private_key
+          chmod 600 private_key
+          ssh -i private_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'EOF'
             cd $DEPLOY_PATH
-            git pull origin master
-            npm install --production
-            pm2 stop mateus-dev-me.com.br || true
-            pm2 start ecosystem.config.js --only mateus-dev-me.com.br
-            pm2 save
+            git pull
+            npm install
+            npm run build
+            if pm2 list | grep -q "mateus-dev-me.com.br"; then
+              pm2 reload mateus-dev-me.com.br
+            else
+              pm2 start npm --name "mateus-dev-me.com.br" -- run start
+            fi
           EOF
